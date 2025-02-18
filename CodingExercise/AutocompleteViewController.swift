@@ -3,6 +3,7 @@ import UIKit
 struct Constants {
     static let textFieldPlaceholder = "Search"
     static let cellIdentifier = "Cell"
+    static let userCellIdentifier = "userCell"
     static let cellRowHeight: CGFloat = 50.0
     static let leftSpacing: CGFloat = 20.0
     static let bottomSpacing: CGFloat = 20.0
@@ -52,6 +53,8 @@ class AutocompleteViewController: UIViewController {
 
         searchResultsTableView.dataSource = self
         searchResultsTableView.delegate = self
+        let nib = UINib(nibName: "UserTableViewCell", bundle: nil)
+        searchResultsTableView.register(nib, forCellReuseIdentifier: Constants.userCellIdentifier)
 
         viewModel.delegate = self
         setupSubviews()
@@ -98,15 +101,24 @@ extension AutocompleteViewController: AutocompleteViewModelDelegate {
 
 extension AutocompleteViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = UITableViewCell(style: .default, reuseIdentifier: Constants.cellIdentifier)
-        let username = viewModel.username(at: indexPath.row)
-
-        cell.textLabel?.text = username
-        cell.accessibilityLabel = username
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: Constants.userCellIdentifier, for: indexPath) as? UserTableViewCell else {
+            return UITableViewCell()
+        }
+        
+        let user = viewModel.user(at: indexPath.row)
+        
+        cell.nameLabel?.text = user.displayName
+        cell.usernameLabel?.text = user.username
+        
+        // Set the avatar image asynchronously
+        if let url = URL(string: user.imageUrl) {
+            cell.setImage(from: url)
+        }
+        
         return cell
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.usernamesCount()
+        return viewModel.usersCount()
     }
 }
